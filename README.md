@@ -13,6 +13,10 @@ A portfolio project built in **n8n** that automates order intake, order logging,
 7. If fulfillment succeeds, sends warehouse-specific Telegram notifications.
 8. If stock is insufficient, builds one shortage message and notifies the manager.
 
+## Workflow overview
+
+![n8n Order Fulfillment Workflow](workflow-overview.png)
+
 ## Workflow structure
 
 ```text
