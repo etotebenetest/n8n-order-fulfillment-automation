@@ -116,3 +116,9 @@ Secrets and personal IDs are **not included** in this repository. Credentials mu
 - multi-warehouse allocation
 - branching and exception handling
 - automated Telegram notifications
+
+## Portfolio purpose
+
+This project was built as a practical portfolio case to demonstrate an end-to-end business automation workflow in n8n.
+
+It simulates a real e-commerce order fulfillment process, including order intake, data storage, warehouse allocation, exception handling, and automated notifications.
