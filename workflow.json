@@ -1,0 +1,351 @@
+{
+  "name": "Order Fulfillment Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3fa199bb-5789-42f7-b691-b20bee78c0a2",
+              "leftValue": "={{ $json.allItemsAllocated }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        816,
+        -16
+      ],
+      "id": "88c3b01d-484c-4026-8b3b-8588ca7487e8",
+      "name": "All items allocated?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nif (items.length === 0) {\n  return [];\n}\n\nconst data = items[0].json;\n\nconst missingItems = data.missingItems || [];\n\nlet message = `❌ Заказ №${data.orderId} невозможно собрать полностью.\\n\\n`;\n\nif (missingItems.length > 0) {\n  message += `Не хватает:\\n`;\n\n  for (const item of missingItems) {\n    message += `• ${item.product} — ${item.qty} шт.\\n`;\n  }\n} else {\n  message += `Недостаточно товара на складах.`;\n}\n\nreturn [\n  {\n    json: {\n      orderId: data.orderId,\n      status: \"OUT_OF_STOCK\",\n      missingItems,\n      message\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        208
+      ],
+      "id": "49bf16eb-6fb9-4ba2-9990-759dc8af9e0d",
+      "name": "Build shortage message"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1152,
+        208
+      ],
+      "id": "b001b87e-84fa-4f9b-9cff-71d3a3e30a46",
+      "name": "Notify manager"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "store-order",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "dbdf666c-85d3-49b4-a3c3-65c86ac3de39",
+      "name": "Receive Order"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{$json.body.orderId}}",
+            "Name": "={{$json.body.name}}",
+            "Phone": "={{ $json.body.phone }}",
+            "City": "={{ $json.body.city }}",
+            "Payment Status": "={{ $json.body.paymentStatus }}",
+            "Items": "={{ $json.body.items.map(item => `${item.product} - ${item.qty} шт.`).join(\", \") }}",
+            "Order Status": "={{ $json.body.orderStatus }}",
+            "Warehouse": "={{ $json.body.warehouse }}"
+          },
+          "matchingColumns": [
+            "Order ID"
+          ],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Items",
+              "displayName": "Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order Status",
+              "displayName": "Order Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Warehouse",
+              "displayName": "Warehouse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sent to Warehouses At",
+              "displayName": "Sent to Warehouses At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "ad4c5117-a2b3-4a1f-a599-9cd577cbb686",
+      "name": "Save Order to Google Sheets"
+    },
+    {
+      "parameters": {
+        "jsCode": "const warehouses = [\n  {\n    warehouse: \"Москва\",\n    city: \"Москва\",\n    iphoneQty: 5,\n    airpodsQty: 0,\n    watchQty: 4\n  },\n  {\n    warehouse: \"Казань\",\n    city: \"Казань\",\n    iphoneQty: 3,\n    airpodsQty: 5,\n    watchQty: 1\n  },\n  {\n    warehouse: \"Новосибирск\",\n    city: \"Новосибирск\",\n    iphoneQty: 8,\n    airpodsQty: 8,\n    watchQty: 8\n  }\n];\n\nreturn [\n  {\n    json: {\n      ...$input.first().json,\n      warehouses\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -16
+      ],
+      "id": "8420e32e-ecce-4047-b0c5-ea9a5821d426",
+      "name": "Load Warehouse Stock"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst orderItems = $(\"Receive Order\").first().json.body.items;\n\nconst localWarehouses = data.warehouses.filter(\n    warehouse => warehouse.city === data.City\n);\n\nlet suitableWarehouse = localWarehouses.find(\n    warehouse =>\n        orderItems.every(\n            item => warehouse[item.key] >= item.qty\n        )\n);\n\n// Если локальный склад не подходит,\n// ищем склад среди всех городов\nif (!suitableWarehouse) {\n    suitableWarehouse = data.warehouses.find(\n        warehouse =>\n            orderItems.every(\n                item => warehouse[item.key] >= item.qty\n            )\n    );\n}\n\nconst remainingItems = orderItems.map(item => ({\n    ...item\n}));\n\nlet allocations = [];\n\nif (suitableWarehouse) {\n    allocations = [\n        {\n            warehouse: suitableWarehouse.warehouse,\n            allocatedItems: orderItems.map(item => ({\n                product: item.product,\n                qty: item.qty\n            }))\n        }\n        ];\n\n    remainingItems.forEach(item => {\n        item.qty = 0;\n    });\n\n} else {\n    allocations = data.warehouses.map(warehouse => {\n        const allocatedItems = remainingItems\n            .filter(\n                item =>\n                    item.qty > 0 &&\n                    warehouse[item.key] > 0\n            )\n            .map(item => {\n                const allocatedQty = Math.min(\n                    warehouse[item.key],\n                    item.qty\n                );\n\n                item.qty = item.qty - allocatedQty;\n\n                return {\n                    product: item.product,\n                    qty: allocatedQty\n                };\n            });\n\n        return {\n            warehouse: warehouse.warehouse,\n            allocatedItems\n        };\n    });\n}\n\nconst activeWarehouses = allocations.filter(\n    allocation => allocation.allocatedItems.length > 0\n);\n\nconst allItemsAllocated =\n    Boolean(suitableWarehouse) ||\n    remainingItems.every(item => item.qty === 0);\n\nconst warehousesText = activeWarehouses\n    .map(allocation => allocation.warehouse)\n    .join(\" → \");\n\nconst missingItems = remainingItems.filter(item => item.qty > 0);\n\nreturn activeWarehouses.map(allocation => {\n    return {\n        json: {\n            orderId: $(\"Receive Order\").first().json.body.orderId,\n            warehousesText,\n            warehouse: allocation.warehouse,\n            allItemsAllocated,\n            missingItems,\n            message: `📦 Новый заказ для склада: ${allocation.warehouse}\n\n${allocation.allocatedItems\n    .map(item => `• ${item.product} - ${item.qty} шт.`)\n    .join(\"\\n\")}`\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -16
+      ],
+      "id": "4ac272fb-1736-4f43-b068-e0ff867913c4",
+      "name": "Allocate Order to Warehouses"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{$json.message}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        928,
+        -224
+      ],
+      "id": "41a2c85c-7fcd-417a-8d63-a25ea0bd7c37",
+      "name": "Notify Warehouses"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "All items allocated?": {
+      "main": [
+        [
+          {
+            "node": "Notify Warehouses",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build shortage message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build shortage message": {
+      "main": [
+        [
+          {
+            "node": "Notify manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Order": {
+      "main": [
+        [
+          {
+            "node": "Save Order to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Order to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Load Warehouse Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Warehouse Stock": {
+      "main": [
+        [
+          {
+            "node": "Allocate Order to Warehouses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Allocate Order to Warehouses": {
+      "main": [
+        [
+          {
+            "node": "All items allocated?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}

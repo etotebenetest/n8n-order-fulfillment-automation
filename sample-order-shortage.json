@@ -1,0 +1,26 @@
+{
+  "orderId": 1008,
+  "name": "Ivan",
+  "phone": "+79991234567",
+  "city": "Москва",
+  "paymentStatus": "Paid",
+  "items": [
+    {
+      "product": "iPhone",
+      "key": "iphoneQty",
+      "qty": 100
+    },
+    {
+      "product": "AirPods",
+      "key": "airpodsQty",
+      "qty": 5
+    },
+    {
+      "product": "Watch",
+      "key": "watchQty",
+      "qty": 3
+    }
+  ],
+  "orderStatus": "New",
+  "warehouse": ""
+}
